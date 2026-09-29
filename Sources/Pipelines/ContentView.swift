@@ -9,6 +9,7 @@ struct ContentView: View {
         var id: String { rawValue }
     }
     @State private var activeSheet: Sheet?
+    @State private var showingViewOptions = false
     @State private var projectSearchRequest = UUID()
     @State private var viewerSearch = ""
     @State private var matchIndex = 0
@@ -46,16 +47,11 @@ struct ContentView: View {
                     .keyboardShortcut("k").help("Find project (⌘F or ⌘K)")
                 Button { activeSheet = .connection } label: { Label("Repository", systemImage: "folder.badge.gearshape") }
                     .help("Connect to a repository")
-                Menu {
-                    Picker("Pipeline limit", selection: $store.limit) {
-                        ForEach([10, 20, 30, 50, 100], id: \.self) { Text("\($0) pipelines").tag($0) }
+                Button { showingViewOptions.toggle() } label: { Label("View Options", systemImage: "slider.horizontal.3") }
+                    .popover(isPresented: $showingViewOptions) {
+                        ViewOptionsView(limit: $store.limit, refreshInterval: $store.refreshInterval,
+                                        showInlineLogs: $store.showInlineLogs)
                     }
-                    Picker("Refresh", selection: $store.refreshInterval) {
-                        Text("Paused").tag(0)
-                        ForEach([5, 10, 20, 30, 60, 120], id: \.self) { Text("Every \($0) seconds").tag($0) }
-                    }
-                    Toggle("Inline log previews", isOn: $store.showInlineLogs)
-                } label: { Label("View Options", systemImage: "slider.horizontal.3") }
                 Button { Task { await store.refresh() } } label: { Label("Refresh", systemImage: "arrow.clockwise") }
                     .keyboardShortcut("r")
                     .disabled(store.repo.isEmpty || store.isDemo)

@@ -14,7 +14,7 @@ The sidebar offers status filters. Select a pipeline to see its branch, commit, 
 - **?**: show all keyboard shortcuts (outside editable text fields). The toolbar’s **Keyboard Shortcuts** button opens the same popup; **Esc** closes it.
 - **⌘F**: fuzzy search projects from any view, including logs, code, connection, and Settings.
 - Use **Find in logs/code** to search job output. Enter or the arrow buttons move between matches.
-- **View Options** in the toolbar: pipeline count, refresh interval, inline logs.
+- **View Options** in the toolbar: pipeline count, refresh interval, inline logs. The popup stays open while changing options; changes apply immediately. Click **Done**, press **Esc**, or click outside to close it.
 - Drag the dividers to resize the sidebar and jobs/logs panels.
 - **Wrap**, **Lines**, and **Follow** control the log viewer.
 - **Open in Browser** opens a pipeline or job on its provider.
