@@ -6,11 +6,12 @@ A native SwiftUI viewer for GitLab CI pipelines and GitHub Actions, rebuilt from
 
 Open `dist/Pipelines.app` after building. In **Pipelines → Settings…** (`⌘,`), choose the parent folder containing your projects. The app recursively discovers `.git` directories and worktree `.git` files, including nested repositories. Dependency and build caches are skipped, and symlinks are not followed.
 
-Press **⌘F** anywhere in the app to fuzzy search projects. **⌘K**, plain **f** outside editable text fields, and clicking the repository name also open the project picker. Type a few letters from a relative folder name: fuzzy search matches subsequences and ranks adjacent letters and word boundaries. Use **↑/↓** and **Enter**, double-click a result, or select it and click **Open**. Projects without an `origin` remote appear in the list but cannot load hosted pipelines. Use **Rescan** after adding or moving projects. The parent folder and last selected repository persist across launches.
+Press **⌘F** anywhere in the app to fuzzy search projects. **⌘K** and clicking the repository name also open the project picker. Type a few letters from a relative folder name: fuzzy search matches subsequences and ranks adjacent letters and word boundaries. Use **↑/↓** and **Enter**, double-click a result, or select it and click **Open**. Projects without an `origin` remote appear in the list but cannot load hosted pipelines. Use **Rescan** after adding or moving projects. The parent folder and last selected repository persist across launches.
 
-The sidebar offers status filters and pipeline search. Select a pipeline to see its branch, commit, source, author, start time, duration, and jobs grouped by stage. Select a job to inspect its logs or resolved code. The GUI preserves previous-run metadata, typical job durations, and the latest five log lines for running or failed jobs.
+The sidebar offers status filters. Select a pipeline to see its branch, commit, source, author, start time, duration, and jobs grouped by stage. Select a job to inspect its logs or resolved code. The GUI preserves previous-run metadata, typical job durations, and the latest five log lines for running or failed jobs.
 
 - **⌘R**: refresh.
+- **?**: show all keyboard shortcuts (outside editable text fields). The toolbar’s **Keyboard Shortcuts** button opens the same popup; **Esc** closes it.
 - **⌘F**: fuzzy search projects from any view, including logs, code, connection, and Settings.
 - Use **Find in logs/code** to search job output. Enter or the arrow buttons move between matches.
 - **View Options** in the toolbar: pipeline count, refresh interval, inline logs.

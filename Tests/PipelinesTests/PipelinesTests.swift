@@ -3,14 +3,27 @@ import Foundation
 import Testing
 @testable import Pipelines
 
-@Test func projectSearchShortcutWorksAcrossViewerAndEditingContexts() {
-    #expect(ProjectSearchShortcut.matches(characters: "f", modifiers: [], isEditing: false))
-    #expect(ProjectSearchShortcut.matches(characters: "f", modifiers: .command, isEditing: false))
-    #expect(ProjectSearchShortcut.matches(characters: "f", modifiers: .command, isEditing: true))
-    #expect(!ProjectSearchShortcut.matches(characters: "f", modifiers: [], isEditing: true))
-    #expect(!ProjectSearchShortcut.matches(characters: "f", modifiers: [.command, .shift], isEditing: false))
-    #expect(!ProjectSearchShortcut.matches(characters: "f", modifiers: .control, isEditing: false))
-    #expect(!ProjectSearchShortcut.matches(characters: "r", modifiers: [], isEditing: false))
+@Test func shortcutHelpAcceptsQuestionMarkWithoutInterruptingTyping() {
+    #expect(ProjectSearchShortcut.matchesHelp(characters: "?", modifiers: [], isEditing: false))
+    #expect(ProjectSearchShortcut.matchesHelp(characters: "?", modifiers: .shift, isEditing: false))
+    #expect(ProjectSearchShortcut.matchesHelp(characters: "?", modifiers: [.shift, .capsLock], isEditing: false))
+    #expect(!ProjectSearchShortcut.matchesHelp(characters: "?", modifiers: .shift, isEditing: true))
+    #expect(!ProjectSearchShortcut.matchesHelp(characters: "?", modifiers: [.command, .shift], isEditing: false))
+    #expect(!ProjectSearchShortcut.matchesHelp(characters: "?", modifiers: .control, isEditing: false))
+    #expect(!ProjectSearchShortcut.matchesHelp(characters: "?", modifiers: .option, isEditing: false))
+    #expect(!ProjectSearchShortcut.matchesHelp(characters: "/", modifiers: .shift, isEditing: false))
+    #expect(!ProjectSearchShortcut.matchesHelp(characters: nil, modifiers: [], isEditing: false))
+}
+
+@Test func projectSearchShortcutsRequireCommand() {
+    for key in ["f", "k"] {
+        #expect(ProjectSearchShortcut.matches(characters: key, modifiers: .command))
+        #expect(!ProjectSearchShortcut.matches(characters: key, modifiers: []))
+        #expect(!ProjectSearchShortcut.matches(characters: key, modifiers: [.command, .shift]))
+        #expect(!ProjectSearchShortcut.matches(characters: key, modifiers: [.command, .option]))
+        #expect(!ProjectSearchShortcut.matches(characters: key, modifiers: .control))
+    }
+    #expect(!ProjectSearchShortcut.matches(characters: "r", modifiers: .command))
 }
 
 @Test func fuzzySearchMatchesSubsequencesAndRanksContiguousNames() {

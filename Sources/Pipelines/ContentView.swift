@@ -5,22 +5,16 @@ struct ContentView: View {
     @EnvironmentObject private var settings: AppSettings
     @StateObject private var store = PipelineStore()
     private enum Sheet: String, Identifiable {
-        case connection, projects
+        case connection, projects, shortcuts
         var id: String { rawValue }
     }
     @State private var activeSheet: Sheet?
     @State private var projectSearchRequest = UUID()
-    @State private var search = ""
     @State private var viewerSearch = ""
     @State private var matchIndex = 0
     @State private var wrap = true
     @State private var lineNumbers = true
     @State private var follow = true
-
-    private var filteredPipelines: [Pipeline] {
-        guard !search.isEmpty else { return store.pipelines }
-        return store.pipelines.filter { "\($0.id) \($0.title) \($0.ref) \($0.sha) \($0.commit.authorName)".localizedCaseInsensitiveContains(search) }
-    }
 
     var body: some View {
         NavigationSplitView {
@@ -65,6 +59,8 @@ struct ContentView: View {
                 Button { Task { await store.refresh() } } label: { Label("Refresh", systemImage: "arrow.clockwise") }
                     .keyboardShortcut("r")
                     .disabled(store.repo.isEmpty || store.isDemo)
+                Button { activeSheet = .shortcuts } label: { Label("Keyboard Shortcuts", systemImage: "questionmark.circle") }
+                    .help("Keyboard shortcuts (?)")
             }
         }
         .sheet(item: $activeSheet) { sheet in
@@ -72,13 +68,16 @@ struct ContentView: View {
             case .connection: ConnectionView(store: store)
             case .projects:
                 RepositorySwitcher(store: store, searchRequest: projectSearchRequest).environmentObject(settings)
+            case .shortcuts: KeyboardShortcutsView()
             }
         }
         .background {
-            ProjectSearchShortcut {
+            ProjectSearchShortcut(open: {
                 activeSheet = .projects
                 projectSearchRequest = UUID()
-            }
+            }, showHelp: {
+                activeSheet = activeSheet == .shortcuts ? nil : .shortcuts
+            })
         }
         .task {
             Task { await settings.scan() }
@@ -122,16 +121,13 @@ struct ContentView: View {
                     ForEach(["running", "pending", "manual", "success", "failed", "canceled", "skipped"], id: \.self) { Text($0.capitalized).tag($0) }
                 }
                 .labelsHidden()
-                TextField("Search pipelines", text: $search)
-                    .textFieldStyle(.roundedBorder)
-                    .accessibilityLabel("Search pipelines")
             }
             .padding(16)
             Divider()
-            if filteredPipelines.isEmpty {
+            if store.pipelines.isEmpty {
                 VStack(spacing: 12) {
                     Image(systemName: store.repo.isEmpty ? "folder" : "tray").font(.system(size: 30)).foregroundStyle(.tertiary)
-                    Text(store.listLoading ? "Loading pipelines…" : search.isEmpty ? "No pipelines found" : "No matching pipelines").font(.callout).foregroundStyle(.secondary)
+                    Text(store.listLoading ? "Loading pipelines…" : "No pipelines found").font(.callout).foregroundStyle(.secondary)
                     if !store.repo.isEmpty && store.filter == "active" && !store.listLoading {
                         Button("Show all pipelines") { store.filter = "all" }
                     }
@@ -140,7 +136,7 @@ struct ContentView: View {
                 .padding(20).frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List(selection: $store.selectedPipelineID) {
-                    ForEach(filteredPipelines) { p in
+                    ForEach(store.pipelines) { p in
                         PipelineListRow(pipeline: p, now: store.now).tag(p.id)
                     }
                 }

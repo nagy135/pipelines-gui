@@ -62,8 +62,14 @@ struct RepositorySwitcher: View {
                 Button("Open") { activate() }.keyboardShortcut(.defaultAction).disabled(selected?.remote.isEmpty != false)
             }.padding(14)
         }.frame(width: 620)
-        .onAppear { focused = true; selectedID = matches.first(where: { $0.path == store.localRepositoryPath })?.id ?? matches.first?.id }
-        .task { if settings.repositories.isEmpty { await settings.scan() } }
+        .onAppear { selectedID = matches.first(where: { $0.path == store.localRepositoryPath })?.id ?? matches.first?.id }
+        .task {
+            // Let a replaced connection sheet install its new field editor before focusing it.
+            try? await Task.sleep(for: .milliseconds(150))
+            guard !Task.isCancelled else { return }
+            focused = true
+            if settings.repositories.isEmpty { await settings.scan() }
+        }
         .onChange(of: query) { _, _ in selectedID = matches.first?.id }
         .onChange(of: searchRequest) { _, _ in focused = true }
         .onChange(of: settings.repositories) { _, _ in if !matches.contains(where: { $0.id == selectedID }) { selectedID = matches.first?.id } }

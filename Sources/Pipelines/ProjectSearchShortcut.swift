@@ -1,27 +1,38 @@
 import AppKit
 import SwiftUI
 
-/// Route project search to the active main window, including from its sheets or Settings.
+/// Route project search and shortcut help to the active main window, including from its sheets or Settings.
 struct ProjectSearchShortcut: NSViewRepresentable {
     var open: () -> Void
+    var showHelp: () -> Void
 
-    nonisolated static func matches(characters: String?, modifiers: NSEvent.ModifierFlags, isEditing: Bool) -> Bool {
-        guard characters == "f" else { return false }
+    nonisolated static func matches(characters: String?, modifiers: NSEvent.ModifierFlags) -> Bool {
+        guard characters == "f" || characters == "k" else { return false }
         let modifiers = modifiers.intersection([.command, .control, .option, .shift])
-        return modifiers == .command || (modifiers.isEmpty && !isEditing)
+        return modifiers == .command
+    }
+
+    nonisolated static func matchesHelp(characters: String?, modifiers: NSEvent.ModifierFlags, isEditing: Bool) -> Bool {
+        guard characters == "?", !isEditing else { return false }
+        // Use the produced character so layouts that require Shift for ? also work.
+        return modifiers.intersection([.command, .control, .option]).isEmpty
     }
 
     static func openProjectSearch() { ShortcutView.target(for: NSApp.keyWindow)?.activate() }
 
     func makeNSView(context: Context) -> ShortcutView { ShortcutView() }
 
-    func updateNSView(_ view: ShortcutView, context: Context) { view.open = open }
+    func updateNSView(_ view: ShortcutView, context: Context) {
+        view.open = open
+        view.showHelp = showHelp
+    }
 
     static func dismantleNSView(_ view: ShortcutView, coordinator: ()) { view.stopMonitoring() }
 
     final class ShortcutView: NSView {
         private static let hosts = NSHashTable<ShortcutView>.weakObjects()
         var open: (() -> Void)?
+        var showHelp: (() -> Void)?
         private var monitor: Any?
 
         static func target(for window: NSWindow?) -> ShortcutView? {
@@ -39,7 +50,8 @@ struct ProjectSearchShortcut: NSViewRepresentable {
         }
 
         func activate() {
-            window?.makeKeyAndOrderFront(nil)
+            if let sheet = window?.attachedSheet { sheet.makeKeyAndOrderFront(nil) }
+            else { window?.makeKeyAndOrderFront(nil) }
             open?()
         }
 
@@ -53,8 +65,15 @@ struct ProjectSearchShortcut: NSViewRepresentable {
                     guard let self, Self.target(for: event.window) === self,
                           NSApp.modalWindow == nil, !event.isARepeat else { return false }
                     let isEditing = (event.window?.firstResponder as? NSTextView)?.isEditable == true
+                    if ProjectSearchShortcut.matchesHelp(characters: event.characters,
+                                                         modifiers: event.modifierFlags, isEditing: isEditing) {
+                        if let sheet = self.window?.attachedSheet { sheet.makeKeyAndOrderFront(nil) }
+                        else { self.window?.makeKeyAndOrderFront(nil) }
+                        self.showHelp?()
+                        return true
+                    }
                     guard ProjectSearchShortcut.matches(characters: event.charactersIgnoringModifiers,
-                                                        modifiers: event.modifierFlags, isEditing: isEditing) else { return false }
+                                                        modifiers: event.modifierFlags) else { return false }
                     self.activate()
                     return true
                 }
